@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Polygon, Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { Layers, Globe } from 'lucide-react';
 import { DemoState } from '../App';
 
 export type FieldStatus = 'idle' | 'scanning' | 'scanned' | 'healthy' | 'stressed' | 'disease';
@@ -88,6 +89,7 @@ export function Map({ fields, demoState, onFieldClick }: MapProps) {
   const [d1, setD1] = useState<[number, number]>(BASE_STATION);
   const [d2, setD2] = useState<[number, number]>(BASE_STATION);
   const [d3, setD3] = useState<[number, number]>(BASE_STATION);
+  const [mapStyle, setMapStyle] = useState<'osm' | 'satellite'>('osm');
 
   useEffect(() => {
     let startTime = Date.now();
@@ -160,9 +162,17 @@ export function Map({ fields, demoState, onFieldClick }: MapProps) {
         style={{ height: '100%', width: '100%', zIndex: 0 }}
         attributionControl={false}
       >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {mapStyle === 'osm' ? (
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+        ) : (
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EBP, and the GIS User Community'
+          />
+        )}
         
         {fields.map((field) => (
           <Polygon 
@@ -189,6 +199,24 @@ export function Map({ fields, demoState, onFieldClick }: MapProps) {
           </>
         )}
       </MapContainer>
+
+      {/* Map Style Toggle */}
+      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+        <button
+          onClick={() => setMapStyle(mapStyle === 'osm' ? 'satellite' : 'osm')}
+          className="bg-white/90 backdrop-blur-sm p-2.5 rounded-xl shadow-lg border border-white/50 hover:bg-white transition-all duration-200 group flex items-center justify-center"
+          title={mapStyle === 'osm' ? 'Switch to Satellite' : 'Switch to Street View'}
+        >
+          {mapStyle === 'osm' ? (
+            <Globe className="w-5 h-5 text-gray-700 group-hover:text-blue-600" />
+          ) : (
+            <Layers className="w-5 h-5 text-blue-600 group-hover:text-blue-700" />
+          )}
+          <span className="ml-2 text-sm font-semibold text-gray-700 pr-1">
+            {mapStyle === 'osm' ? 'Satellite' : 'Street'}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
