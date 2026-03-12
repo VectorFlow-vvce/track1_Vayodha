@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Activity, FileText, Loader2, Leaf, Send } from 'lucide-react';
+import { Play, Activity, FileText, Loader2, Leaf, Send, Satellite } from 'lucide-react';
 import { Map, Field, FieldStatus } from './components/Map';
 import { Metrics } from './components/Metrics';
 import { ReportModal } from './components/ReportModal';
 import { FieldDetailsModal } from './components/FieldDetailsModal';
 
-export type DemoState = 'IDLE' | 'DEPLOYING' | 'SCANNING' | 'ANALYZING' | 'REPORT_READY';
+export type DemoState = 'IDLE' | 'SATELLITE_PASS' | 'DEPLOYING' | 'SCANNING' | 'ANALYZING' | 'REPORT_READY';
 
 const initialFields: Field[] = [
   { id: 'A', name: 'Field A', path: [[13.8920, 75.2380], [13.8930, 75.2380], [13.8930, 75.2400], [13.8920, 75.2400]], center: [13.8925, 75.2390], status: 'idle' },
@@ -50,13 +50,36 @@ export default function App() {
     return () => clearInterval(interval);
   }, [demoState]);
 
-  const handleDeploy = () => {
-    setDemoState('DEPLOYING');
-    setScanMessage('Deploying drone swarm...');
-    setTimeout(() => {
-      setDemoState('SCANNING');
-      startScanningSimulation();
-    }, 2000); // 2 seconds to deploy
+  const handleStartScan = () => {
+    setDemoState('SATELLITE_PASS');
+    setScanMessage('Acquiring satellite lock... Orbital pass initiated.');
+    setScanProgress(0);
+
+    // Satellite pass takes 5 seconds, then auto-transition to drone deployment
+    let progress = 0;
+    const satInterval = setInterval(() => {
+      progress += 2;
+      setScanProgress(Math.min(progress, 100));
+
+      if (progress === 10) setScanMessage('Satellite Pass 1 — Multispectral imaging...');
+      if (progress === 30) setScanMessage('Satellite Pass 2 — NDVI data acquisition...');
+      if (progress === 60) setScanMessage('Satellite Pass 3 — Thermal band capture...');
+      if (progress === 85) setScanMessage('Processing orbital imagery... Identifying targets...');
+
+      if (progress >= 100) {
+        clearInterval(satInterval);
+        setScanMessage('Satellite scan complete. Anomalies detected → Deploying drones...');
+        setScanProgress(0);
+        setTimeout(() => {
+          setDemoState('DEPLOYING');
+          setScanMessage('Drone swarm lifting off from base station...');
+          setTimeout(() => {
+            setDemoState('SCANNING');
+            startScanningSimulation();
+          }, 2500);
+        }, 1200);
+      }
+    }, 100); // 5 seconds total (50 steps * 100ms)
   };
 
   const startScanningSimulation = () => {
@@ -175,7 +198,7 @@ export default function App() {
             
             <div className="space-y-4 flex-1">
               <button
-                onClick={handleDeploy}
+                onClick={handleStartScan}
                 disabled={demoState !== 'IDLE'}
                 className={`w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-medium transition-all ${
                   demoState === 'IDLE' 
@@ -183,20 +206,32 @@ export default function App() {
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                <Send size={18} />
-                <span>Deploy Drone Swarm</span>
+                <Satellite size={18} />
+                <span>Start Satellite Scan</span>
               </button>
 
               <button
-                disabled={demoState !== 'SCANNING'}
+                disabled={demoState !== 'SATELLITE_PASS'}
                 className={`w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-medium transition-all ${
-                  demoState === 'SCANNING' 
+                  demoState === 'SATELLITE_PASS' 
+                    ? 'bg-violet-600 text-white shadow-sm' 
+                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                {demoState === 'SATELLITE_PASS' ? <Loader2 size={18} className="animate-spin" /> : <Satellite size={18} />}
+                <span>{demoState === 'SATELLITE_PASS' ? 'Satellite Passing...' : 'Satellite Pass'}</span>
+              </button>
+
+              <button
+                disabled={demoState !== 'DEPLOYING' && demoState !== 'SCANNING'}
+                className={`w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-medium transition-all ${
+                  demoState === 'DEPLOYING' || demoState === 'SCANNING' 
                     ? 'bg-blue-600 text-white shadow-sm' 
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                <Play size={18} />
-                <span>Scanning Village...</span>
+                {demoState === 'DEPLOYING' ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} />}
+                <span>{demoState === 'DEPLOYING' ? 'Deploying Drones...' : 'Drone Scanning...'}</span>
               </button>
 
               <button
@@ -262,13 +297,13 @@ export default function App() {
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-semibold text-gray-900">{scanMessage}</span>
-                  {demoState === 'SCANNING' && <span className="text-sm font-mono text-emerald-600">{scanProgress}%</span>}
+                  {(demoState === 'SATELLITE_PASS' || demoState === 'SCANNING') && <span className="text-sm font-mono text-emerald-600">{scanProgress}%</span>}
                 </div>
                 
-                {demoState === 'SCANNING' && (
+                {(demoState === 'SATELLITE_PASS' || demoState === 'SCANNING') && (
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                     <motion.div 
-                      className="h-full bg-emerald-500"
+                      className={`h-full ${demoState === 'SATELLITE_PASS' ? 'bg-violet-500' : 'bg-emerald-500'}`}
                       initial={{ width: 0 }}
                       animate={{ width: `${scanProgress}%` }}
                       transition={{ ease: "linear", duration: 0.2 }}
