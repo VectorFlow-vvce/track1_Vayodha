@@ -18,6 +18,7 @@ export interface Field {
 interface MapProps {
   fields: Field[];
   demoState: DemoState;
+  activeFieldScan?: string | null;
   onFieldClick?: (field: Field) => void;
 }
 
@@ -60,25 +61,8 @@ const satelliteIcon = L.divIcon({
 
 // ─── Drone Configuration ─────────────────────────────────────────────────────
 // Drone with spinning rotor blades animation
-const droneHtml = `<div style="position:relative; display:flex; align-items:center; justify-content:center; width:36px; height:36px;">
-  <!-- Rotor blur ring -->
-  <div style="position:absolute; width:32px; height:32px; border-radius:50%; border: 1.5px dashed rgba(59,130,246,0.5); animation: rotorSpin 0.3s linear infinite;"></div>
-  <!-- Drone body -->
-  <div style="color: #1e3a5f; filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.15)); transform: rotate(-45deg);">
-    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#1e3a5f" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.6L2.5 8.5L8 12l-4 4-2.5-.5-1.5 1.5 4.5 1.5 1.5 4.5 1.5-1.5-.5-2.5 4-4 3.5 5.5 1.7-1.2c.4-.2.7-.6.6-1.1Z"/>
-    </svg>
-  </div>
-  <!-- Camera FOV indicator -->
-  <div style="position:absolute; bottom:-4px; width:8px; height:8px; background:rgba(59,130,246,0.4); border-radius:50%; animation: camPulse 1s ease-in-out infinite alternate;"></div>
-</div>`;
-
-const droneIcon = L.divIcon({
-  html: droneHtml,
-  className: 'bg-transparent border-none',
-  iconSize: [36, 36],
-  iconAnchor: [18, 18],
-});
+// Note: Drone HTML is no longer static; it will be dynamically generated
+// to include the live telemetry data and scanning lasers.
 
 // Base station
 const baseHtml = `<div style="position: relative; display: flex; align-items: center; justify-content: center;">
@@ -167,7 +151,7 @@ function computeSwathPolygon(
 }
 
 // ─── Map Component ───────────────────────────────────────────────────────────
-export function Map({ fields, demoState, onFieldClick }: MapProps) {
+export function Map({ fields, demoState, activeFieldScan, onFieldClick }: MapProps) {
   const [d1, setD1] = useState<[number, number]>(BASE_STATION);
   const [d2, setD2] = useState<[number, number]>(BASE_STATION);
   const [d3, setD3] = useState<[number, number]>(BASE_STATION);
@@ -179,6 +163,56 @@ export function Map({ fields, demoState, onFieldClick }: MapProps) {
 
   // Drone camera FOV polygons
   const [droneFovs, setDroneFovs] = useState<([number, number][] | null)[]>([null, null, null]);
+
+  // Live telemetry data for each drone
+  const [telemetry, setTelemetry] = useState({
+    d1: { ndvi: '0.65', mst: '42%' },
+    d2: { ndvi: '0.62', mst: '40%' },
+    d3: { ndvi: '0.68', mst: '45%' },
+  });
+
+  // Dynamic drone icon generator
+  const getDroneIcon = (isScanning: boolean, tData: { ndvi: string, mst: string }) => {
+    return L.divIcon({
+      className: 'bg-transparent border-none overflow-visible',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+      html: `
+        <div style="position:relative; display:flex; align-items:center; justify-content:center; width:36px; height:36px; z-index: 1000;">
+          
+          ${isScanning ? `
+            <!-- Live Telemetry Floating Bubble -->
+            <div style="position:absolute; top:-40px; left:50%; transform:translateX(-50%); background:rgba(15,23,42,0.9); backdrop-filter:blur(4px); padding:4px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); color:white; font-family:monospace; font-size:10px; font-weight:600; white-space:nowrap; display:flex; flex-direction:column; gap:2px; box-shadow:0 4px 12px rgba(0,0,0,0.3); pointer-events:none; animation: floatBubble 2s ease-in-out infinite;">
+              <div style="display:flex; justify-content:space-between; gap:8px;">
+                <span style="color:#94a3b8;">N:</span> <span style="color:#34d399;">${tData.ndvi}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; gap:8px;">
+                <span style="color:#94a3b8;">M:</span> <span style="color:#60a5fa;">${tData.mst}</span>
+              </div>
+              <!-- Tooltip pointing arrow -->
+              <div style="position:absolute; bottom:-4px; left:50%; transform:translateX(-50%) rotate(45deg); width:8px; height:8px; background:rgba(15,23,42,0.9); border-right:1px solid rgba(255,255,255,0.1); border-bottom:1px solid rgba(255,255,255,0.1);"></div>
+            </div>
+          ` : ''}
+
+          <!-- Rotor blur ring -->
+          <div style="position:absolute; width:32px; height:32px; border-radius:50%; border: 1.5px dashed rgba(59,130,246,0.5); animation: rotorSpin 0.3s linear infinite;"></div>
+          
+          <!-- Drone body -->
+          <div style="color: #1e3a5f; filter: drop-shadow(0 4px 6px rgb(0 0 0 / 0.15)); transform: rotate(-45deg);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#1e3a5f" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.2-1.1.6L2.5 8.5L8 12l-4 4-2.5-.5-1.5 1.5 4.5 1.5 1.5 4.5 1.5-1.5-.5-2.5 4-4 3.5 5.5 1.7-1.2c.4-.2.7-.6.6-1.1Z"/>
+            </svg>
+          </div>
+
+          ${isScanning ? `
+            <!-- Sweeping Laser Cone (Origin at top center so it sweeps like a pendulum) -->
+            <div style="position:absolute; top:24px; left:50%; margin-left:-30px; width:60px; height:80px; background: linear-gradient(to bottom, rgba(59,130,246,0.4) 0%, transparent 100%); clip-path: polygon(50% 0, 100% 100%, 0 100%); transform-origin: top center; animation: laserSweep 1.5s ease-in-out infinite; pointer-events:none; z-index:-1;"></div>
+          ` : ''}
+          
+        </div>
+      `
+    });
+  };
 
   // ─── Satellite Pass Animation ──────────────────────────────────────────────
   useEffect(() => {
@@ -248,6 +282,18 @@ export function Map({ fields, demoState, onFieldClick }: MapProps) {
     const path2 = [startD2, ...survey2];
     const path3 = [startD3, ...survey3];
 
+    // Live telemetry number fluctuation
+    let telemetryInterval: number | undefined;
+    if (demoState === 'SCANNING' || demoState === 'FIELD_SCAN') {
+      telemetryInterval = window.setInterval(() => {
+        setTelemetry({
+          d1: { ndvi: (0.6 + Math.random() * 0.15).toFixed(2), mst: Math.floor(35 + Math.random() * 15) + '%' },
+          d2: { ndvi: (0.6 + Math.random() * 0.15).toFixed(2), mst: Math.floor(35 + Math.random() * 15) + '%' },
+          d3: { ndvi: (0.6 + Math.random() * 0.15).toFixed(2), mst: Math.floor(35 + Math.random() * 15) + '%' },
+        });
+      }, 150);
+    }
+
     const animate = () => {
       const now = Date.now();
       const elapsed = now - startTime;
@@ -295,6 +341,36 @@ export function Map({ fields, demoState, onFieldClick }: MapProps) {
         setD2(lerpLatLng(startD2, BASE_STATION, easeT));
         setD3(lerpLatLng(startD3, BASE_STATION, easeT));
         setDroneFovs([null, null, null]);
+      } else if (demoState === 'FIELD_SCAN' && activeFieldScan) {
+        // Single-drone field scan
+        const targetField = fields.find(f => f.id === activeFieldScan);
+        if (targetField) {
+          const singleSurvey = generateSurveyPattern(targetField, 5);
+          const singlePath = [BASE_STATION, ...singleSurvey, BASE_STATION];
+
+          const DEPLOY_TIME = 2000;
+          const SCAN_TIME = 8000;
+          const RETURN_TIME = 2000;
+          const TOTAL = DEPLOY_TIME + SCAN_TIME + RETURN_TIME;
+
+          if (elapsed < DEPLOY_TIME) {
+            // Flying to field
+            const t = easeInOutCubic(elapsed / DEPLOY_TIME);
+            setD1(lerpLatLng(BASE_STATION, singlePath[1], t));
+          } else if (elapsed < DEPLOY_TIME + SCAN_TIME) {
+            // Scanning
+            const scanElapsed = elapsed - DEPLOY_TIME;
+            const t = Math.min(scanElapsed / SCAN_TIME, 1);
+            const pos = getPointAlongPath(singleSurvey, t);
+            setD1(pos);
+          } else if (elapsed < TOTAL) {
+            // Returning to base
+            const returnElapsed = elapsed - DEPLOY_TIME - SCAN_TIME;
+            const t = easeInOutCubic(Math.min(returnElapsed / RETURN_TIME, 1));
+            const lastSurveyPoint = singleSurvey[singleSurvey.length - 1];
+            setD1(lerpLatLng(lastSurveyPoint, BASE_STATION, t));
+          }
+        }
       } else if (demoState === 'IDLE') {
         setD1(BASE_STATION);
         setD2(BASE_STATION);
@@ -308,8 +384,11 @@ export function Map({ fields, demoState, onFieldClick }: MapProps) {
     };
 
     animate();
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [demoState]);
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      clearInterval(telemetryInterval);
+    };
+  }, [demoState, activeFieldScan]);
 
   // ─── Field Styling ─────────────────────────────────────────────────────────
   const getPathOptions = (status: FieldStatus) => {
@@ -435,29 +514,16 @@ export function Map({ fields, demoState, onFieldClick }: MapProps) {
         {/* ─── DRONE PHASE VISUALS ─── */}
         {(demoState === 'DEPLOYING' || demoState === 'SCANNING' || demoState === 'ANALYZING') && (
           <>
-            {/* Camera FOV indicators during scanning */}
-            {demoState === 'SCANNING' && droneFovs.map((fov, i) => (
-              fov && (
-                <Polygon
-                  key={`fov-${i}`}
-                  positions={fov}
-                  pathOptions={{
-                    color: '#3b82f6',
-                    fillColor: '#60a5fa',
-                    fillOpacity: 0.2,
-                    weight: 1,
-                    opacity: 0.5,
-                    dashArray: '2 2',
-                  }}
-                />
-              )
-            ))}
-
             {/* Drone markers */}
-            <Marker position={d1} icon={droneIcon} />
-            <Marker position={d2} icon={droneIcon} />
-            <Marker position={d3} icon={droneIcon} />
+            <Marker position={d1} icon={getDroneIcon(demoState === 'SCANNING', telemetry.d1)} />
+            <Marker position={d2} icon={getDroneIcon(demoState === 'SCANNING', telemetry.d2)} />
+            <Marker position={d3} icon={getDroneIcon(demoState === 'SCANNING', telemetry.d3)} />
           </>
+        )}
+
+        {/* ─── SINGLE FIELD SCAN VISUALS ─── */}
+        {demoState === 'FIELD_SCAN' && (
+          <Marker position={d1} icon={getDroneIcon(true, telemetry.d1)} />
         )}
       </MapContainer>
 
