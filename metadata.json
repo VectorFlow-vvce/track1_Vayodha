@@ -1,0 +1,5 @@
+{
+  "name": "AgriSense Demo",
+  "description": "Interactive demo for AgriSense: AI for Every Acre. Simulates drone swarm crop surveying and AI analysis.",
+  "requestFramePermissions": []
+}
