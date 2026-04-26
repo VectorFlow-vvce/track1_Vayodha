@@ -34,6 +34,7 @@ export default function App() {
   const [activeFieldScan, setActiveFieldScan] = useState<string | null>(null);
   const [qrField, setQrField] = useState<Field | null>(null);
   const [connectedFarmers, setConnectedFarmers] = useState<Record<string, boolean>>({});
+  const [localIp, setLocalIp] = useState(window.location.hostname);
   const socketRef = useRef<Socket | null>(null);
   
   const [metrics, setMetrics] = useState({
@@ -44,17 +45,23 @@ export default function App() {
     soil: 45
   });
 
-  // Get local IP for QR codes
-  const localIp = window.location.hostname;
+  // Get base URL using server-detected IP
   const baseUrl = `http://${localIp}:3000`;
 
   // ─── Socket.io Connection ──────────────────────────────────────────────────
   useEffect(() => {
-    const s = io(`http://${localIp}:3001`);
+    const host = window.location.hostname;
+    const s = io(`http://${host}:3001`);
     socketRef.current = s;
 
     s.on('connect', () => {
       console.log('[HQ] Connected to sync server');
+    });
+
+    // Receive the actual local network IP from the server
+    s.on('localIp', (ip: string) => {
+      console.log('[HQ] Local IP:', ip);
+      setLocalIp(ip);
     });
 
     s.on('farmerConnected', ({ fieldId }: { fieldId: string }) => {

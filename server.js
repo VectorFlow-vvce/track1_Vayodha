@@ -1,6 +1,22 @@
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import os from 'os';
+
+// Detect local network IP
+function getLocalIp() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return '127.0.0.1';
+}
+
+const LOCAL_IP = getLocalIp();
 
 const app = express();
 const httpServer = createServer(app);
@@ -22,8 +38,9 @@ let demoState = {
 io.on('connection', (socket) => {
   console.log(`[Socket] Client connected: ${socket.id}`);
 
-  // Send current state to newly connected client
+  // Send current state AND local IP to newly connected client
   socket.emit('stateUpdate', demoState);
+  socket.emit('localIp', LOCAL_IP);
 
   // Farmer joins a specific field
   socket.on('joinField', (fieldId) => {
