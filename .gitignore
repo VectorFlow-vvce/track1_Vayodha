@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+*.pth
+*.pt
+*.tmp
+*.png
