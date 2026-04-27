@@ -222,6 +222,8 @@ track1_Vayodha/
 |---|---|---|
 | **RF-DETR Seg Nano** | Real-time webcam/drone object segmentation | ~4–6 fps (MPS), ~20+ fps (CUDA) |
 
+> **Note:** The pre-trained model weights (`.pt` files) used by this project are large and not tracked in Git. You can download the cached models used for this project from our [Google Drive stash](https://drive.google.com/drive/folders/18GSESj8cOmVut8xsTTsVF1tYbOKT6ysT?usp=sharing). Place them in your environment's cache directory if you want to skip the automatic initial download.
+
 ---
 
 ## Team
