@@ -8,7 +8,7 @@ import supervision as sv
 from PIL import Image as PILImage
 
 try:
-    from rfdetr import RFDETRSegNano
+    from rfdetr import RFDETRSegSmall
 except ImportError as e:
     print(f"Error: {e}. Run with the venv python.")
     sys.exit(1)
@@ -95,8 +95,8 @@ class InferenceThread(threading.Thread):
 
 
 def main():
-    print(f"Loading RF-DETR Segmentation Nano on {DEVICE.upper()}...")
-    model = RFDETRSegNano(device=DEVICE)
+    print(f"Loading RF-DETR Seg Small on {DEVICE.upper()}...")
+    model = RFDETRSegSmall(device=DEVICE)
     print(f"Model ready on {DEVICE.upper()}.\n")
 
     cap = cv2.VideoCapture(0)
