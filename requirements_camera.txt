@@ -1,0 +1,8 @@
+rfdetr
+Pillow
+opencv-python
+supervision
+torch
+torchvision
+flask
+flask-cors

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Activity, FileText, Loader2, Leaf, Satellite, QrCode, X, Smartphone, Wifi } from 'lucide-react';
+import { Play, Activity, FileText, Loader2, Leaf, Satellite, QrCode, X, Smartphone, Wifi, Camera } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { io, Socket } from 'socket.io-client';
 import { Map, Field, FieldStatus } from './components/Map';
 import { Metrics } from './components/Metrics';
 import { ReportModal } from './components/ReportModal';
 import { FieldDetailsModal } from './components/FieldDetailsModal';
+import { DroneCameraModal } from './components/DroneCameraModal';
 
 export type DemoState = 'IDLE' | 'SATELLITE_PASS' | 'DEPLOYING' | 'SCANNING' | 'ANALYZING' | 'REPORT_READY' | 'FIELD_SCAN';
 
@@ -35,6 +36,7 @@ export default function App() {
   const [qrField, setQrField] = useState<Field | null>(null);
   const [connectedFarmers, setConnectedFarmers] = useState<Record<string, boolean>>({});
   const [localIp, setLocalIp] = useState(window.location.hostname);
+  const [showDroneCam, setShowDroneCam] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   
   const [metrics, setMetrics] = useState({
@@ -362,6 +364,14 @@ export default function App() {
                 <FileText size={18} />
                 <span>View Farmer Report</span>
               </button>
+
+              <button
+                onClick={() => setShowDroneCam(true)}
+                className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-medium transition-all bg-cyan-600 text-white hover:bg-cyan-700 shadow-sm hover:shadow"
+              >
+                <Camera size={18} />
+                <span>Live Drone Camera</span>
+              </button>
             </div>
 
             {demoState !== 'IDLE' && (
@@ -511,6 +521,10 @@ export default function App() {
         isOpen={selectedField !== null} 
         onClose={() => setSelectedField(null)} 
         field={selectedField} 
+      />
+      <DroneCameraModal 
+        isOpen={showDroneCam} 
+        onClose={() => setShowDroneCam(false)} 
       />
     </div>
   );

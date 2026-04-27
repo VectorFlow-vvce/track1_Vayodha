@@ -10,7 +10,7 @@ interface FieldReport {
   status: 'healthy' | 'stressed' | 'disease';
 }
 
-// Enriched field data — these get passed as query params to Apoorva
+// Enriched field data — these get passed as query params to Bhoomi
 const FIELD_INFO: Record<string, {
   name: string;
   crop: string;
@@ -58,8 +58,8 @@ const STATUS_CONFIG = {
   },
 };
 
-// Build the Apoorva iframe URL with field-specific query params
-function buildApoorvaUrl(fieldId: string, reportStatus?: string): string {
+// Build the Bhoomi iframe URL with field-specific query params
+function buildBhoomiUrl(fieldId: string, reportStatus?: string): string {
   const field = FIELD_INFO[fieldId] || FIELD_INFO['A'];
   const params = new URLSearchParams({
     crop: field.crop,
@@ -73,7 +73,7 @@ function buildApoorvaUrl(fieldId: string, reportStatus?: string): string {
   if (reportStatus) {
     params.set('problem', reportStatus === 'disease' ? 'FungalInfection' : reportStatus === 'stressed' ? 'WaterStress' : 'None');
   }
-  return `https://cara-voice.web.app/apoorva?${params.toString()}`;
+  return `https://cara-voice.web.app/bhoomi?${params.toString()}`;
 }
 
 export function FarmerApp() {
@@ -134,7 +134,7 @@ export function FarmerApp() {
 
   const statusConf = report ? STATUS_CONFIG[report.status] : null;
   const StatusIcon = statusConf?.icon || ShieldCheck;
-  const apoorvaUrl = buildApoorvaUrl(fId, report?.status);
+  const bhoomiUrl = buildBhoomiUrl(fId, report?.status);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white font-sans flex flex-col items-center px-4 py-6 select-none" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -205,7 +205,7 @@ export function FarmerApp() {
             </motion.div>
           )}
 
-          {/* IDLE — Request Scan Button + Talk to Apoorva */}
+          {/* IDLE — Request Scan Button + Talk to Bhoomi */}
           {phase === 'IDLE' && (
             <motion.div key="idle" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="w-full flex flex-col items-center gap-3">
               <motion.button
@@ -220,11 +220,11 @@ export function FarmerApp() {
               
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={() => window.open(apoorvaUrl, '_blank')}
+                onClick={() => window.open(bhoomiUrl, '_blank')}
                 className="w-full py-4 px-6 bg-gradient-to-r from-violet-600 to-purple-500 rounded-2xl font-bold text-base text-white shadow-lg shadow-violet-600/30 flex items-center justify-center gap-3 transition-shadow"
               >
                 <Mic size={20} />
-                <span>Talk to Apoorva</span>
+                <span>Talk to Bhoomi</span>
               </motion.button>
 
               <p className="text-xs text-slate-500 mt-2 text-center">Scan your field or get voice assistance from your AI agronomist.</p>
@@ -299,14 +299,14 @@ export function FarmerApp() {
                 </div>
               </div>
 
-              {/* Talk to Apoorva with report context */}
+              {/* Talk to Bhoomi with report context */}
               <motion.button
                 whileTap={{ scale: 0.95 }}
-                onClick={() => window.open(apoorvaUrl, '_blank')}
+                onClick={() => window.open(bhoomiUrl, '_blank')}
                 className="w-full py-4 px-6 bg-gradient-to-r from-violet-600 to-purple-500 rounded-2xl font-bold text-base text-white shadow-lg shadow-violet-600/20 flex items-center justify-center gap-3 mb-3 transition-shadow"
               >
                 <Mic size={20} />
-                <span>Discuss with Apoorva</span>
+                <span>Discuss with Bhoomi</span>
               </motion.button>
 
               <button
