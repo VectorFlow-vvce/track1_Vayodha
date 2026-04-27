@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Activity, FileText, Loader2, Leaf, Satellite, QrCode, X, Smartphone, Wifi, Camera } from 'lucide-react';
+import { Play, Activity, FileText, Loader2, Leaf, Satellite, QrCode, X, Smartphone, Wifi, Camera, Bug } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { io, Socket } from 'socket.io-client';
 import { Map, Field, FieldStatus } from './components/Map';
@@ -8,6 +8,7 @@ import { Metrics } from './components/Metrics';
 import { ReportModal } from './components/ReportModal';
 import { FieldDetailsModal } from './components/FieldDetailsModal';
 import { DroneCameraModal } from './components/DroneCameraModal';
+import { DiseaseDetectionModal } from './components/DiseaseDetectionModal';
 
 export type DemoState = 'IDLE' | 'SATELLITE_PASS' | 'DEPLOYING' | 'SCANNING' | 'ANALYZING' | 'REPORT_READY' | 'FIELD_SCAN';
 
@@ -37,6 +38,7 @@ export default function App() {
   const [connectedFarmers, setConnectedFarmers] = useState<Record<string, boolean>>({});
   const [localIp, setLocalIp] = useState(window.location.hostname);
   const [showDroneCam, setShowDroneCam] = useState(false);
+  const [showDiseaseDetection, setShowDiseaseDetection] = useState(false);
   const socketRef = useRef<Socket | null>(null);
   
   const [metrics, setMetrics] = useState({
@@ -372,6 +374,14 @@ export default function App() {
                 <Camera size={18} />
                 <span>Live Drone Camera</span>
               </button>
+
+              <button
+                onClick={() => setShowDiseaseDetection(true)}
+                className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-medium transition-all bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm hover:shadow"
+              >
+                <Bug size={18} />
+                <span>AI Disease Detection</span>
+              </button>
             </div>
 
             {demoState !== 'IDLE' && (
@@ -525,6 +535,10 @@ export default function App() {
       <DroneCameraModal 
         isOpen={showDroneCam} 
         onClose={() => setShowDroneCam(false)} 
+      />
+      <DiseaseDetectionModal 
+        isOpen={showDiseaseDetection} 
+        onClose={() => setShowDiseaseDetection(false)} 
       />
     </div>
   );

@@ -20,7 +20,7 @@ from flask import Flask, Response, jsonify
 from flask_cors import CORS
 
 try:
-    from rfdetr import RFDETRSegSmall
+    from rfdetr import RFDETRSegNano
 except ImportError as e:
     print(f"Error: {e}. Make sure rfdetr is installed in your venv.")
     sys.exit(1)
@@ -129,8 +129,8 @@ class CameraThread(threading.Thread):
         if self.running:
             return True
 
-        print(f"[Camera] Loading RF-DETR Seg Small on {DEVICE.upper()}...")
-        model = RFDETRSegSmall(device=DEVICE)
+        print(f"[Camera] Loading RF-DETR Seg Nano on {DEVICE.upper()}...")
+        model = RFDETRSegNano(device=DEVICE)
         print(f"[Camera] Model ready on {DEVICE.upper()}")
 
         self.cap = cv2.VideoCapture(0)
