@@ -221,8 +221,6 @@ track1_Vayodha/
 | Model | Purpose | Speed |
 |---|---|---|
 | **RF-DETR Seg Nano** | Real-time webcam/drone object segmentation | ~4–6 fps (MPS), ~20+ fps (CUDA) |
-| **Google Gemini 2.0 Flash** | Plant disease identification from images | ~2–3s per image |
-| **Gemini 2.0 Flash Lite** | Fallback model when Flash quota is exhausted | ~2–3s per image |
 
 ---
 
