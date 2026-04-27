@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iframe Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #eee; }
+        .container { display: flex; gap: 20px; }
+        .controls { width: 300px; padding: 20px; background: white; border-radius: 8px; }
+        .preview { flex: 1; border: 2px dashed #ccc; padding: 10px; display: flex; justify-content: center; align-items: center; min-height: 600px; background: url('https://www.transparenttextures.com/patterns/cubes.png'); }
+        iframe { width: 100%; height: 600px; border: none; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: width 0.3s; }
+        button { padding: 8px 16px; margin: 5px 0; width: 100%; cursor: pointer; }
+        .log { margin-top: 20px; height: 200px; overflow-y: auto; background: #f8f8f8; border: 1px solid #ddd; padding: 10px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>Iframe Integration Test</h1>
+    <div class="container">
+        <div class="controls">
+            <h3>Controls</h3>
+            <button onclick="resize('desktop')">Desktop Size (100%)</button>
+            <button onclick="resize('tablet')">Tablet Size (768px)</button>
+            <button onclick="resize('mobile')">Mobile Size (375px)</button>
+            <hr>
+            <button onclick="toggleTransparency()">Toggle Transparency Param</button>
+            <hr>
+            <button onclick="sendMessage('START_SESSION')">Send START_SESSION</button>
+            <button onclick="sendMessage('END_SESSION')">Send END_SESSION</button>
+            
+            <div class="log" id="log"></div>
+        </div>
+        <div class="preview">
+            <iframe id="appFrame" src="http://localhost:5173?transparent=true"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const frame = document.getElementById('appFrame');
+        const logDiv = document.getElementById('log');
+
+        function log(msg) {
+            const div = document.createElement('div');
+            div.textContent = `${new Date().toLocaleTimeString()} - ${msg}`;
+            logDiv.prepend(div);
+        }
+
+        function resize(mode) {
+            if (mode === 'desktop') frame.style.width = '100%';
+            if (mode === 'tablet') frame.style.width = '768px';
+            if (mode === 'mobile') frame.style.width = '375px';
+            log(`Resized to ${mode}`);
+        }
+
+        function toggleTransparency() {
+            const currentSrc = new URL(frame.src);
+            if (currentSrc.searchParams.get('transparent') === 'true') {
+                currentSrc.searchParams.set('transparent', 'false');
+            } else {
+                currentSrc.searchParams.set('transparent', 'true');
+            }
+            frame.src = currentSrc.toString();
+            log(`Reloaded with transparent=${currentSrc.searchParams.get('transparent')}`);
+        }
+
+        function sendMessage(type) {
+            frame.contentWindow.postMessage({ type }, '*');
+            log(`Sent: ${type}`);
+        }
+
+        window.addEventListener('message', (event) => {
+            log(`Received: ${JSON.stringify(event.data)}`);
+        });
+    </script>
+</body>
+</html>
