@@ -19,6 +19,7 @@ Built for **Ecatech Hackathon — Track 1 (Vayodha)** by **Team VectorFlow**.
 | 🌿 **AI Disease Diagnosis** | Upload a crop image → Gemini Vision identifies disease, severity, and treatment |
 | 📡 **Real-time Telemetry** | WebSocket (Socket.io) sync between HQ dashboard and farmer mobile portal |
 | 📱 **Farmer App** | Mobile-first farmer interface with drone scan requests and Bhoomi AI voice assistant |
+| 🎙️ **Bhoomi Voice Agent** | Conversational AI agronomist — speaks to farmers in their language about field-specific crop conditions |
 | 🎥 **Camera Server** | Threaded MJPEG stream server with live RF-DETR annotations over HTTP |
 
 ---
@@ -46,6 +47,41 @@ Built for **Ecatech Hackathon — Track 1 (Vayodha)** by **Team VectorFlow**.
                  │  RF-DETR Seg Nano + MPS/CUDA │
                  └─────────────────────────────┘
 ```
+
+---
+
+## 🎙️ Bhoomi — AI Voice Agronomist
+
+**Bhoomi** is the embedded conversational voice agent available inside the Farmer App. She acts as an always-available AI agronomist that farmers can speak to directly after a drone scan.
+
+### What Bhoomi does
+
+- Explains the scan report in plain language (no jargon)
+- Answers questions about crop diseases, irrigation, and treatments
+- Receives full field context automatically — crop type, soil, area, district, season, and detected problem
+- Adapts her advice based on the real-time scan result (healthy / water stress / disease)
+
+### How it works
+
+When a farmer taps **"Talk to Bhoomi"** or **"Discuss with Bhoomi"** in the Farmer App, it opens Bhoomi pre-loaded with the current field's context:
+
+```
+https://cara-voice.web.app/bhoomi?crop=Rice&soil=RedSoil&district=Tumkur&problem=FungalInfection&...
+```
+
+The field parameters passed automatically include:
+
+| Parameter | Example |
+|---|---|
+| `crop` | Rice, Sugarcane, Cotton |
+| `area` | 2.4acres |
+| `soil` | RedSoil, BlackSoil, Laterite |
+| `irrigation` | Canal, Borewell, Rainfed |
+| `district` | Tumkur, Mysore, Dharwad |
+| `season` | Kharif, Rabi |
+| `problem` | FungalInfection, WaterStress, None |
+
+This means Bhoomi already knows everything about the farmer's field the moment the conversation starts — no manual input required.
 
 ---
 
